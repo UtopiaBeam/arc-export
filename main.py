@@ -228,26 +228,29 @@ def convert_to_bookmarks(spaces: dict, items: list) -> dict:
 
     def recurse_into_children(parent_id: str) -> list:
         nonlocal bookmarks_count
+
+        print(item_dict[parent_id], end='\n\n')
+        children_ids: list = item_dict[parent_id].get("childrenIds", [])
         children: list = []
-        for item_id, item in item_dict.items():
-            if item.get("parentID") == parent_id:
-                if "data" in item and "tab" in item["data"]:
-                    children.append(
-                        {
-                            "title": item.get("title", None)
-                            or item["data"]["tab"].get("savedTitle", ""),
-                            "type": "bookmark",
-                            "url": item["data"]["tab"].get("savedURL", ""),
-                        }
-                    )
-                    bookmarks_count += 1
-                elif "title" in item:
-                    child_folder: dict = {
-                        "title": item["title"],
-                        "type": "folder",
-                        "children": recurse_into_children(item_id),
+        for child_id in children_ids:
+            item = item_dict[child_id]
+            if "data" in item and "tab" in item["data"]:
+                children.append(
+                    {
+                        "title": item.get("title", None)
+                        or item["data"]["tab"].get("savedTitle", ""),
+                        "type": "bookmark",
+                        "url": item["data"]["tab"].get("savedURL", ""),
                     }
-                    children.append(child_folder)
+                )
+                bookmarks_count += 1
+            elif "title" in item:
+                child_folder: dict = {
+                    "title": item["title"],
+                    "type": "folder",
+                    "children": recurse_into_children(child_id),
+                }
+                children.append(child_folder)
         return children
 
     for space_id, space_name in spaces["pinned"].items():
